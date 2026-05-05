@@ -53,6 +53,22 @@ export async function POST(req: Request) {
             updatedAt: new Date(),
           });
         }
+
+        // Notify Admin via Telegram
+        try {
+          const { sendTelegramNotification } = await import("@/lib/telegram");
+          await sendTelegramNotification(
+            `<b>💰 Pembayaran Diterima!</b>\n\n` +
+            `<b>Produk:</b> ${orderData.productName}\n` +
+            `<b>Klien:</b> ${orderData.userName || orderData.userEmail}\n` +
+            `<b>Domain:</b> ${orderData.domainName}\n` +
+            `<b>Total:</b> Rp ${orderData.price?.toLocaleString("id-ID")}\n\n` +
+            `<b>⚠️ PROVISIONING REQUIRED</b>\n` +
+            `<i>Layanan siap di-setup di panel admin.</i>`
+          );
+        } catch (e) {
+          console.error("Telegram notify failed", e);
+        }
       }
     }
 

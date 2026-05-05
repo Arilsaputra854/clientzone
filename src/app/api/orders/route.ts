@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       });
     }
 
-    let query: any = adminDb.collection("orders").orderBy("createdAt", "desc");
+    let query: any = adminDb.collection("orders");
 
     if (userId) {
       query = query.where("userId", "==", userId);
@@ -33,8 +33,19 @@ export async function GET(req: Request) {
     }
 
     const snapshot = await query.get();
-    const orders = snapshot.docs.map((doc: any) => {
+    
+    // Fetch all user names to populate missing ones (legacy data)
+    const orders = await Promise.all(snapshot.docs.map(async (doc: any) => {
       const data = doc.data();
+      
+      if (!data.userName && data.userId) {
+        const userDoc = await adminDb.collection("users").doc(data.userId).get();
+        if (userDoc.exists) {
+          data.userName = userDoc.data()?.name;
+          data.userEmail = userDoc.data()?.email;
+        }
+      }
+
       return {
         id: doc.id,
         ...data,
@@ -43,6 +54,13 @@ export async function GET(req: Request) {
         paidAt: data.paidAt?.toDate ? data.paidAt.toDate() : data.paidAt,
         activatedAt: data.activatedAt?.toDate ? data.activatedAt.toDate() : data.activatedAt,
       };
+    }));
+
+    // Sort in memory to avoid requiring composite index
+    orders.sort((a: any, b: any) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
     });
 
     return NextResponse.json(orders);
@@ -55,7 +73,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, userId, userName, userEmail, domainName } = body;
+    const { productId, userId, userName, userEmail, domainName, repoUrl } = body;
 
     // 1. Get Product Data
     const productDoc = await adminDb.collection("products").doc(productId).get();
@@ -69,9 +87,12 @@ export async function POST(req: Request) {
     const orderData = {
       id: orderRef.id,
       userId,
+      userName,
+      userEmail,
       productId,
       productName: product.name,
       domainName,
+      repoUrl,
       price: product.price,
       billingCycle: product.billingCycle,
       status: "UNPAID",
@@ -93,6 +114,8 @@ export async function POST(req: Request) {
       id: invoiceRef.id,
       orderId: orderRef.id,
       userId,
+      userName,
+      userEmail,
       xenditInvoiceId: xenditInvoice.id,
       xenditInvoiceUrl: xenditInvoice.invoiceUrl,
       totalAmount: product.price,

@@ -37,11 +37,11 @@ export default function AdminInvoicesPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Klien</TableHead>
               <TableHead>ID Invoice</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Nominal</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Metode</TableHead>
               <TableHead>Tgl Bayar</TableHead>
             </TableRow>
           </TableHeader>
@@ -59,7 +59,10 @@ export default function AdminInvoicesPage() {
             ) : (
               invoices.map((inv) => (
                 <TableRow key={inv.id}>
-                  <TableCell className="font-mono text-xs">{inv.xenditInvoiceId}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    {inv.userName || inv.userEmail || inv.userId}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{inv.xenditInvoiceId}</TableCell>
                   <TableCell>
                     {inv.createdAt ? format(new Date(inv.createdAt?.seconds * 1000 || inv.createdAt), "dd/MM/yyyy") : "-"}
                   </TableCell>
@@ -69,7 +72,6 @@ export default function AdminInvoicesPage() {
                       {inv.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>Xendit</TableCell>
                   <TableCell>
                     {inv.paidAt ? format(new Date(inv.paidAt?.seconds * 1000 || inv.paidAt), "dd/MM/yyyy HH:mm") : "-"}
                   </TableCell>

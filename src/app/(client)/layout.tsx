@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { NewsBanner } from "@/components/news-banner";
 
 export default function ClientLayout({
   children,
@@ -26,7 +27,10 @@ export default function ClientLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
+      const timer = setTimeout(() => {
+        router.push("/login");
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user, loading, router]);
 
@@ -71,24 +75,28 @@ export default function ClientLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/10 rounded-md text-gray-400 text-xs w-64 cursor-text hover:bg-white/10 transition-colors">
-              <Search className="w-4 h-4" />
-              <span>Cari di ClientZone...</span>
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400 hover:text-white relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-[#ea4335] rounded-full border-2 border-[#121212]"></span>
+            </Button>
+            
+            <div className="h-8 w-px bg-white/5 mx-1" />
+            
+            <div className="flex items-center gap-3 pl-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-white leading-none mb-1">{user.email?.split('@')[0] || "User"}</p>
+                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-tighter">Client</p>
+              </div>
+              <Avatar className="h-9 w-9 border border-white/10 ring-2 ring-[#1a73e8]/20">
+                <AvatarFallback className="bg-[#1a73e8] text-white font-bold text-xs">
+                  {user.email?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
             </div>
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-              <Bell className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-              <HelpCircle className="w-5 h-5" />
-            </Button>
-            <div className="h-8 w-px bg-white/10 mx-2" />
-            <Avatar className="h-8 w-8 border border-white/10 ring-2 ring-primary/20">
-              <AvatarFallback className="bg-[#1a73e8] text-white text-xs">
-                {user.email?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
           </div>
         </header>
+
+        <NewsBanner />
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar">

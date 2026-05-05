@@ -7,7 +7,7 @@ export async function GET(req: Request) {
     const userId = searchParams.get("userId");
     const orderId = searchParams.get("orderId");
 
-    let query: any = adminDb.collection("invoices").orderBy("createdAt", "desc");
+    let query: any = adminDb.collection("invoices");
 
     if (userId) {
       query = query.where("userId", "==", userId);
@@ -17,8 +17,19 @@ export async function GET(req: Request) {
     }
 
     const snapshot = await query.get();
-    const invoices = snapshot.docs.map((doc: any) => {
+    
+    // Fetch all user names to populate missing ones (legacy data)
+    const invoices = await Promise.all(snapshot.docs.map(async (doc: any) => {
       const data = doc.data();
+      
+      if (!data.userName && data.userId) {
+        const userDoc = await adminDb.collection("users").doc(data.userId).get();
+        if (userDoc.exists) {
+          data.userName = userDoc.data()?.name;
+          data.userEmail = userDoc.data()?.email;
+        }
+      }
+
       return {
         id: doc.id,
         ...data,
@@ -27,6 +38,13 @@ export async function GET(req: Request) {
         paidAt: data.paidAt?.toDate ? data.paidAt.toDate() : data.paidAt,
         updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
       };
+    }));
+
+    // Sort in memory to avoid requiring composite index
+    invoices.sort((a: any, b: any) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
     });
 
     return NextResponse.json(invoices);

@@ -15,11 +15,14 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        router.push("/login");
-      } else if (userData?.role !== "ADMIN") {
-        router.push("/dashboard");
-      }
+      const timer = setTimeout(() => {
+        if (!user) {
+          router.push("/login");
+        } else if (userData?.role !== "ADMIN") {
+          router.push("/dashboard");
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user, userData, loading, router]);
 

@@ -6,24 +6,19 @@ import {
   LayoutDashboard, 
   Package, 
   History, 
-  Settings, 
   LogOut, 
   Globe, 
   Cpu, 
-  Mail, 
   PlusCircle,
   ChevronDown,
-  Monitor,
-  Database,
-  Cloud,
-  ChevronRight
+  MessageSquare,
+  ChevronRight,
+  LifeBuoy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { auth } from "@/../firebase/config";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function ClientSidebar() {
   const pathname = usePathname();
@@ -42,19 +37,19 @@ export function ClientSidebar() {
   const buildItems = [
     { name: "Semua Layanan", href: "/services", icon: Package },
     { name: "Riwayat Pesanan", href: "/orders", icon: History },
+    { name: "Tiket Bantuan", href: "/tickets", icon: LifeBuoy },
   ];
 
   const productCategories = [
     { name: "Hosting", href: "/services?cat=HOSTING", icon: Globe },
     { name: "VPS", href: "/services?cat=VPS", icon: Cpu },
-    { name: "Email", href: "/services?cat=EMAIL", icon: Mail },
   ];
 
   const SidebarItem = ({ item, active }: { item: any, active: boolean }) => (
     <Link
       href={item.href}
       className={cn(
-        "group flex items-center gap-3 px-4 py-2 text-sm font-medium transition-all relative",
+        "group flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all relative",
         active 
           ? "text-[#1a73e8] bg-[#1a73e8]/10" 
           : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -71,7 +66,7 @@ export function ClientSidebar() {
     <div className="flex flex-col h-full w-64 bg-[#1e1e1e] border-r border-white/10 select-none">
       {/* Sidebar Header */}
       <div className="p-4 border-b border-white/10 flex items-center gap-3">
-        <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center text-white font-bold italic">
+        <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center text-white font-bold italic shadow-lg shadow-amber-500/20">
           CZ
         </div>
         <div className="flex-1 min-w-0">
@@ -86,15 +81,15 @@ export function ClientSidebar() {
 
       <div className="flex-1 overflow-y-auto pt-4 pb-2">
         {/* Main Menu */}
-        <div className="space-y-1 mb-6">
+        <div className="space-y-1 mb-8">
           {menuItems.map((item) => (
             <SidebarItem key={item.href} item={item} active={pathname === item.href} />
           ))}
         </div>
 
         {/* Categories */}
-        <div className="mb-6">
-          <p className="px-4 mb-2 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+        <div className="mb-8">
+          <p className="px-4 mb-2 text-[11px] font-bold text-gray-500 uppercase tracking-widest opacity-50">
             Build
           </p>
           <div className="space-y-0.5">
@@ -104,8 +99,8 @@ export function ClientSidebar() {
           </div>
         </div>
 
-        <div className="mb-6">
-          <p className="px-4 mb-2 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+        <div className="mb-8">
+          <p className="px-4 mb-2 text-[11px] font-bold text-gray-500 uppercase tracking-widest opacity-50">
             Products
           </p>
           <div className="space-y-0.5">
@@ -117,22 +112,10 @@ export function ClientSidebar() {
       </div>
 
       {/* Sidebar Footer */}
-      <div className="mt-auto border-t border-white/10 p-2 space-y-1">
-        <Link
-          href="/settings"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-            pathname === "/settings"
-              ? "bg-[#1a73e8]/10 text-[#1a73e8]"
-              : "text-gray-400 hover:bg-white/5 hover:text-white"
-          )}
-        >
-          <Settings className="w-4 h-4" />
-          Project settings
-        </Link>
+      <div className="mt-auto border-t border-white/10 p-3">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign out

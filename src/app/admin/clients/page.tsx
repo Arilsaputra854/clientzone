@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { toast } from "sonner";
 
 export default function AdminClientsPage() {
@@ -29,6 +29,25 @@ export default function AdminClientsPage() {
     };
     fetchClients();
   }, []);
+
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return "-";
+    
+    let date: Date;
+    
+    // Handle Firestore Timestamp object structure just in case
+    if (dateValue?.seconds) {
+      date = new Date(dateValue.seconds * 1000);
+    } else {
+      date = new Date(dateValue);
+    }
+
+    if (isValid(date)) {
+      return format(date, "dd MMM yyyy");
+    }
+    
+    return "-";
+  };
 
   return (
     <div className="space-y-8">
@@ -74,7 +93,7 @@ export default function AdminClientsPage() {
                   <TableCell>{client.phone || "-"}</TableCell>
                   <TableCell>{client.company || "-"}</TableCell>
                   <TableCell>
-                    {client.createdAt ? format(new Date(client.createdAt?.seconds * 1000 || client.createdAt), "dd MMM yyyy") : "-"}
+                    {formatDate(client.createdAt)}
                   </TableCell>
                 </TableRow>
               ))
