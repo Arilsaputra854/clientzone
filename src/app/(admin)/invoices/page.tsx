@@ -1,0 +1,84 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { Receipt } from "lucide-react";
+
+export default function AdminInvoicesPage() {
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const res = await fetch("/api/invoices");
+        const data = await res.json();
+        setInvoices(data);
+      } catch (error) {
+        toast.error("Gagal mengambil data invoice");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInvoices();
+  }, []);
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Semua Invoices</h1>
+        <p className="text-muted-foreground">Monitor semua transaksi dan status pembayaran.</p>
+      </div>
+
+      <div className="bg-background border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID Invoice</TableHead>
+              <TableHead>Tanggal</TableHead>
+              <TableHead>Nominal</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Metode</TableHead>
+              <TableHead>Tgl Bayar</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">Memuat data...</TableCell>
+              </TableRow>
+            ) : invoices.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                  Belum ada transaksi.
+                </TableCell>
+              </TableRow>
+            ) : (
+              invoices.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="font-mono text-xs">{inv.xenditInvoiceId}</TableCell>
+                  <TableCell>
+                    {inv.createdAt ? format(new Date(inv.createdAt?.seconds * 1000 || inv.createdAt), "dd/MM/yyyy") : "-"}
+                  </TableCell>
+                  <TableCell className="font-medium">Rp {inv.totalAmount?.toLocaleString("id-ID")}</TableCell>
+                  <TableCell>
+                    <Badge variant={inv.status === "PAID" ? "default" : "outline"} className={inv.status === "PAID" ? "bg-green-500" : ""}>
+                      {inv.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>Xendit</TableCell>
+                  <TableCell>
+                    {inv.paidAt ? format(new Date(inv.paidAt?.seconds * 1000 || inv.paidAt), "dd/MM/yyyy HH:mm") : "-"}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}

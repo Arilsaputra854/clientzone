@@ -1,0 +1,64 @@
+import { NextResponse } from "next/server";
+import { adminDb } from "@/../firebase/admin";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const headers = req.headers;
+    const xenditToken = headers.get("x-callback-token");
+
+    // 1. Verify Webhook Token
+    if (process.env.XENDIT_WEBHOOK_TOKEN && xenditToken !== process.env.XENDIT_WEBHOOK_TOKEN) {
+      return NextResponse.json({ error: "Invalid callback token" }, { status: 401 });
+    }
+
+    // Xendit Invoice Callback usually contains 'id', 'external_id', 'status', 'paid_at'
+    const { external_id, status, paid_at } = body;
+
+    if (status === "PAID") {
+      // 2. Find Order and Invoice
+      const orderId = external_id;
+      const orderRef = adminDb.collection("orders").doc(orderId);
+      const orderDoc = await orderRef.get();
+
+      if (orderDoc.exists) {
+        const orderData = orderDoc.data()!;
+        
+        // 3. Update Order Status
+        const dueDate = new Date();
+        if (orderData.billingCycle === "MONTHLY") {
+          dueDate.setMonth(dueDate.getMonth() + 1);
+        } else {
+          dueDate.setFullYear(dueDate.getFullYear() + 1);
+        }
+
+        await orderRef.update({
+          status: "ON_PROCESS",
+          paidAt: new Date(paid_at),
+          dueDate: dueDate,
+          updatedAt: new Date(),
+        });
+
+        // 4. Update Invoice Status
+        const invoicesSnapshot = await adminDb.collection("invoices")
+          .where("orderId", "==", orderId)
+          .where("status", "==", "PENDING")
+          .get();
+        
+        if (!invoicesSnapshot.empty) {
+          const invoiceRef = invoicesSnapshot.docs[0].ref;
+          await invoiceRef.update({
+            status: "PAID",
+            paidAt: new Date(paid_at),
+            updatedAt: new Date(),
+          });
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Xendit Webhook Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
