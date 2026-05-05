@@ -149,7 +149,7 @@ export default function ClientTicketsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Kategori</Label>
-                  <Select value={newTicket.category} onValueChange={v => setNewTicket({...newTicket, category: v})}>
+                  <Select value={newTicket.category} onValueChange={v => setNewTicket({...newTicket, category: v as string})}>
                     <SelectTrigger className="bg-white/5 border-white/10">
                       <SelectValue />
                     </SelectTrigger>
@@ -162,7 +162,7 @@ export default function ClientTicketsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Prioritas</Label>
-                  <Select value={newTicket.priority} onValueChange={v => setNewTicket({...newTicket, priority: v})}>
+                  <Select value={newTicket.priority} onValueChange={v => setNewTicket({...newTicket, priority: v as string})}>
                     <SelectTrigger className="bg-white/5 border-white/10">
                       <SelectValue />
                     </SelectTrigger>

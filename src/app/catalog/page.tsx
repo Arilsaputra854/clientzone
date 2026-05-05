@@ -66,7 +66,7 @@ export default function PublicCatalogPage() {
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-          <Tabs defaultValue="ALL" onValueChange={setFilter} className="w-full max-w-2xl">
+          <Tabs defaultValue="ALL" onValueChange={v => setFilter(v as string)} className="w-full max-w-2xl">
             <TabsList className="grid grid-cols-5 h-12 bg-white/5 border border-white/10 p-1">
               <TabsTrigger value="ALL" className="data-[state=active]:bg-[#1a73e8] data-[state=active]:text-white">All</TabsTrigger>
               <TabsTrigger value="HOSTING" className="data-[state=active]:bg-[#1a73e8] data-[state=active]:text-white">Hosting</TabsTrigger>

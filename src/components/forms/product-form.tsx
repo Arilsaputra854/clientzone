@@ -68,7 +68,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           <Label htmlFor="category">Kategori</Label>
           <Select
             value={formData.category}
-            onValueChange={(val) => setFormData({ ...formData, category: val })}
+            onValueChange={(val) => setFormData({ ...formData, category: val as string })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Pilih Kategori" />
@@ -108,7 +108,7 @@ export function ProductForm({ initialData, productId }: ProductFormProps) {
           <Label htmlFor="billingCycle">Siklus Billing</Label>
           <Select
             value={formData.billingCycle}
-            onValueChange={(val) => setFormData({ ...formData, billingCycle: val })}
+            onValueChange={(val) => setFormData({ ...formData, billingCycle: val as string })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Pilih Siklus" />

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Mail, Lock, ArrowRight, Github } from "lucide-react"; // I'll use a generic icon for Google if I don't have it
+import { Mail, Lock, ArrowRight } from "lucide-react";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");

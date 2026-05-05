@@ -150,7 +150,7 @@ export default function AdminTicketDetailPage() {
             </div>
             <p className="text-gray-500 text-sm flex items-center gap-4">
               <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Client: {ticket.userName}</span>
-              <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase">ID: {id.toString().substring(0, 8)}</span>
+              <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase">ID: {id?.toString().substring(0, 8)}</span>
             </p>
           </div>
         </div>

@@ -184,7 +184,7 @@ export function CheckoutForm({ product }: { product: any }) {
                       <Label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
                         <GitBranch className="w-3 h-3" /> Pilih Branch
                       </Label>
-                      <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                      <Select value={selectedBranch} onValueChange={v => setSelectedBranch(v as string)}>
                         <SelectTrigger className="h-12 bg-white/5 border-white/10 text-white">
                           <SelectValue placeholder="Pilih branch" />
                         </SelectTrigger>

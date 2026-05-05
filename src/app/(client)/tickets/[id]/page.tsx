@@ -212,7 +212,7 @@ export default function ClientTicketDetailPage() {
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] text-gray-500 font-bold uppercase">ID Tiket</p>
-                <p className="text-white font-mono text-xs">#{id.toString().substring(0, 8).toUpperCase()}</p>
+                <p className="text-white font-mono text-xs">#{id?.toString().substring(0, 8).toUpperCase()}</p>
               </div>
             </CardContent>
           </Card>
