@@ -2,23 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, History, Settings, LogOut, Globe, Cpu, Mail, PlusCircle } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  Package, 
+  History, 
+  Settings, 
+  LogOut, 
+  Globe, 
+  Cpu, 
+  Mail, 
+  PlusCircle,
+  ChevronDown,
+  Monitor,
+  Database,
+  Cloud,
+  ChevronRight
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/../firebase/config";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-
-const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Semua Layanan", href: "/services", icon: Package },
-];
-
-const categories = [
-  { name: "Hosting", href: "/services?cat=HOSTING", icon: Globe },
-  { name: "VPS", href: "/services?cat=VPS", icon: Cpu },
-  { name: "Email", href: "/services?cat=EMAIL", icon: Mail },
-];
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function ClientSidebar() {
   const pathname = usePathname();
@@ -29,102 +34,109 @@ export function ClientSidebar() {
     router.push("/login");
   };
 
+  const menuItems = [
+    { name: "Project Overview", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Order Baru", href: "/catalog", icon: PlusCircle, highlight: true },
+  ];
+
+  const buildItems = [
+    { name: "Semua Layanan", href: "/services", icon: Package },
+    { name: "Riwayat Pesanan", href: "/orders", icon: History },
+  ];
+
+  const productCategories = [
+    { name: "Hosting", href: "/services?cat=HOSTING", icon: Globe },
+    { name: "VPS", href: "/services?cat=VPS", icon: Cpu },
+    { name: "Email", href: "/services?cat=EMAIL", icon: Mail },
+  ];
+
+  const SidebarItem = ({ item, active }: { item: any, active: boolean }) => (
+    <Link
+      href={item.href}
+      className={cn(
+        "group flex items-center gap-3 px-4 py-2 text-sm font-medium transition-all relative",
+        active 
+          ? "text-[#1a73e8] bg-[#1a73e8]/10" 
+          : "text-gray-400 hover:text-white hover:bg-white/5"
+      )}
+    >
+      {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1a73e8]" />}
+      <item.icon className={cn("w-5 h-5", active ? "text-[#1a73e8]" : "text-gray-400 group-hover:text-gray-200")} />
+      <span className="flex-1">{item.name}</span>
+      {active && <ChevronRight className="w-4 h-4" />}
+    </Link>
+  );
+
   return (
-    <div className="flex flex-col h-full w-64 bg-sidebar border-r">
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-primary italic">Client Zone</h2>
-      </div>
-      
-      <div className="px-4 mb-4">
-        <Button asChild className="w-full gap-2" variant="default">
-          <Link href="/catalog">
-            <PlusCircle className="w-4 h-4" />
-            Order Baru
-          </Link>
-        </Button>
-      </div>
-
-      <nav className="flex-1 px-4 space-y-6">
-        <div>
-          <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Menu Utama
-          </p>
-          <div className="space-y-1">
-            {menuItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  pathname === item.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.name}
-              </Link>
-            ))}
-            <Link
-              href="/orders"
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                pathname.startsWith("/orders")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <History className="w-4 h-4" />
-              Riwayat Pesanan
-            </Link>
+    <div className="flex flex-col h-full w-64 bg-[#1e1e1e] border-r border-white/10 select-none">
+      {/* Sidebar Header */}
+      <div className="p-4 border-b border-white/10 flex items-center gap-3">
+        <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center text-white font-bold italic">
+          CZ
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-bold text-white truncate">ClientZone</h2>
+          <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            Blaze Plan
           </div>
         </div>
+        <ChevronDown className="w-4 h-4 text-gray-500" />
+      </div>
 
-        <div>
-          <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Layanan Saya
+      <div className="flex-1 overflow-y-auto pt-4 pb-2">
+        {/* Main Menu */}
+        <div className="space-y-1 mb-6">
+          {menuItems.map((item) => (
+            <SidebarItem key={item.href} item={item} active={pathname === item.href} />
+          ))}
+        </div>
+
+        {/* Categories */}
+        <div className="mb-6">
+          <p className="px-4 mb-2 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+            Build
           </p>
-          <div className="space-y-1">
-            {categories.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                  pathname === item.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.name}
-              </Link>
+          <div className="space-y-0.5">
+            {buildItems.map((item) => (
+              <SidebarItem key={item.href} item={item} active={pathname === item.href || pathname.startsWith(item.href + "/")} />
             ))}
           </div>
         </div>
-      </nav>
 
-      <div className="p-4 border-t space-y-1">
+        <div className="mb-6">
+          <p className="px-4 mb-2 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+            Products
+          </p>
+          <div className="space-y-0.5">
+            {productCategories.map((item) => (
+              <SidebarItem key={item.href} item={item} active={pathname === item.href} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar Footer */}
+      <div className="mt-auto border-t border-white/10 p-2 space-y-1">
         <Link
           href="/settings"
           className={cn(
             "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
             pathname === "/settings"
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              ? "bg-[#1a73e8]/10 text-[#1a73e8]"
+              : "text-gray-400 hover:bg-white/5 hover:text-white"
           )}
         >
           <Settings className="w-4 h-4" />
-          Settings
+          Project settings
         </Link>
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+        <button
           onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          Logout
-        </Button>
+          Sign out
+        </button>
       </div>
     </div>
   );
