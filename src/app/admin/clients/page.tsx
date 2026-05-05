@@ -15,9 +15,14 @@ export default function AdminClientsPage() {
       try {
         const res = await fetch("/api/clients");
         const data = await res.json();
-        setClients(data);
+        if (Array.isArray(data)) {
+          setClients(data);
+        } else {
+          setClients([]);
+        }
       } catch (error) {
         toast.error("Gagal mengambil data klien");
+        setClients([]);
       } finally {
         setLoading(false);
       }
@@ -54,7 +59,7 @@ export default function AdminClientsPage() {
                   Belum ada klien terdaftar.
                 </TableCell>
               </TableRow>
-            ) : (
+            ) : Array.isArray(clients) && (
               clients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell>

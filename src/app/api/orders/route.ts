@@ -7,6 +7,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     const status = searchParams.get("status");
+    const id = searchParams.get("id");
+
+    if (id) {
+      const doc = await adminDb.collection("orders").doc(id).get();
+      if (!doc.exists) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      const data = doc.data()!;
+      return NextResponse.json({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+        dueDate: data.dueDate?.toDate ? data.dueDate.toDate() : data.dueDate,
+        paidAt: data.paidAt?.toDate ? data.paidAt.toDate() : data.paidAt,
+        activatedAt: data.activatedAt?.toDate ? data.activatedAt.toDate() : data.activatedAt,
+      });
+    }
 
     let query: any = adminDb.collection("orders").orderBy("createdAt", "desc");
 
@@ -32,6 +47,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(orders);
   } catch (error: any) {
+    console.error("GET Orders API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

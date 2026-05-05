@@ -34,10 +34,10 @@ export default function ClientServicesPage() {
     fetchOrders();
   }, [user]);
 
-  const filteredOrders = orders.filter(order => 
+  const filteredOrders = Array.isArray(orders) ? orders.filter(order => 
     order.productName?.toLowerCase().includes(search.toLowerCase()) ||
     order.domainName?.toLowerCase().includes(search.toLowerCase())
-  );
+  ) : [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

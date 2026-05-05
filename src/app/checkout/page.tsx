@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams();

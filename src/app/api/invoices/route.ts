@@ -17,10 +17,21 @@ export async function GET(req: Request) {
     }
 
     const snapshot = await query.get();
-    const invoices = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    const invoices = snapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+        expiresAt: data.expiresAt?.toDate ? data.expiresAt.toDate() : data.expiresAt,
+        paidAt: data.paidAt?.toDate ? data.paidAt.toDate() : data.paidAt,
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
+      };
+    });
 
     return NextResponse.json(invoices);
   } catch (error: any) {
+    console.error("GET Invoices API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/../firebase/admin";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const { serverIp, serverUsername, serverPassword, controlPanelUrl, status } = body;
 
-    const orderRef = adminDb.collection("orders").doc(params.id);
+    const orderRef = adminDb.collection("orders").doc(id);
     
     await orderRef.update({
       status: status || "ACTIVE",

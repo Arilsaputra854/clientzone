@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Server, Globe, Key, Clock, Shield, Table as TableIcon, Copy, Check } from "lucide-react";
+import { Server, Globe, Key, Clock, Shield, Table as TableIcon, Copy, Check, Activity, AlertCircle, CreditCard, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, isAfter } from "date-fns";
 import Link from "next/link";
 
 export default function ClientServiceDetailPage() {
@@ -30,7 +30,7 @@ export default function ClientServiceDetailPage() {
         setOrder(foundOrder);
         
         const invoicesData = await invoicesRes.json();
-        setInvoices(invoicesData);
+        setInvoices(Array.isArray(invoicesData) ? invoicesData : []);
       } catch (error) {
         toast.error("Gagal mengambil detail layanan");
       } finally {
@@ -47,6 +47,9 @@ export default function ClientServiceDetailPage() {
 
   if (loading) return <div className="flex justify-center py-20 animate-spin"><Server /></div>;
   if (!order) return <div className="text-center py-20">Layanan tidak ditemukan.</div>;
+
+  const pendingInvoice = invoices.find(inv => inv.status === "PENDING" && isAfter(new Date(inv.expiresAt), new Date()));
+  const expiredInvoice = invoices.find(inv => inv.status === "PENDING" && !isAfter(new Date(inv.expiresAt), new Date()));
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -74,6 +77,44 @@ export default function ClientServiceDetailPage() {
           )}
         </div>
       </div>
+
+      {pendingInvoice && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex gap-3">
+            <div className="bg-amber-100 p-2 rounded-full h-fit">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-amber-900">Menunggu Pembayaran</h3>
+              <p className="text-sm text-amber-800">
+                Segera selesaikan pembayaran sebelum <strong>{format(new Date(pendingInvoice.expiresAt), "dd MMM yyyy HH:mm")}</strong> agar layanan tetap aktif.
+              </p>
+            </div>
+          </div>
+          <Button asChild className="w-full md:w-auto gap-2 bg-amber-600 hover:bg-amber-700">
+            <a href={pendingInvoice.xenditInvoiceUrl} target="_blank" rel="noopener noreferrer">
+              <CreditCard className="w-4 h-4" />
+              Bayar Sekarang
+            </a>
+          </Button>
+        </div>
+      )}
+
+      {expiredInvoice && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex gap-3">
+            <div className="bg-red-100 p-2 rounded-full h-fit">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-red-900">Link Pembayaran Kadaluarsa</h3>
+              <p className="text-sm text-red-800">
+                Link pembayaran sebelumnya sudah tidak aktif. Silakan hubungi admin untuk generate link baru.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -177,6 +218,7 @@ export default function ClientServiceDetailPage() {
                       <th className="px-4 py-3 text-left font-medium">Tanggal</th>
                       <th className="px-4 py-3 text-left font-medium">Nominal</th>
                       <th className="px-4 py-3 text-left font-medium">Status</th>
+                      <th className="px-4 py-3 text-left font-medium">Batas Waktu</th>
                       <th className="px-4 py-3 text-right font-medium">Aksi</th>
                     </tr>
                   </thead>
@@ -185,7 +227,7 @@ export default function ClientServiceDetailPage() {
                       <tr>
                         <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Tidak ada riwayat invoice.</td>
                       </tr>
-                    ) : (
+                    ) : Array.isArray(invoices) && (
                       invoices.map((inv) => (
                         <tr key={inv.id}>
                           <td className="px-4 py-3">{format(new Date(inv.createdAt), "dd/MM/yyyy")}</td>
@@ -195,8 +237,11 @@ export default function ClientServiceDetailPage() {
                               {inv.status}
                             </Badge>
                           </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">
+                            {inv.status === "PENDING" ? format(new Date(inv.expiresAt), "dd/MM/yyyy HH:mm") : "-"}
+                          </td>
                           <td className="px-4 py-3 text-right">
-                            {inv.status === "PENDING" && inv.xenditInvoiceUrl && (
+                            {inv.status === "PENDING" && isAfter(new Date(inv.expiresAt), new Date()) && inv.xenditInvoiceUrl && (
                               <Button size="sm" variant="outline" asChild>
                                 <a href={inv.xenditInvoiceUrl} target="_blank" rel="noopener noreferrer">Bayar</a>
                               </Button>

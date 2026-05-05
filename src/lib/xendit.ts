@@ -22,8 +22,8 @@ export const createXenditInvoice = async (
         givenNames: customer.name,
         email: customer.email,
       },
-      successRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/orders/${externalId}`,
-      failureRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout?productId=${externalId}`,
+      successRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/services/${externalId}`,
+      failureRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/services/${externalId}`,
     };
 
     const response = await Invoice.createInvoice({ data });

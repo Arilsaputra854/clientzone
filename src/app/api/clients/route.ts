@@ -7,6 +7,7 @@ export async function GET() {
     const clients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json(clients);
   } catch (error: any) {
+    console.error("GET Clients API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

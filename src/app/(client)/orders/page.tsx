@@ -22,7 +22,7 @@ export default function ClientOrdersPage() {
       try {
         const res = await fetch(`/api/orders?userId=${user.uid}`);
         const data = await res.json();
-        setOrders(data);
+        setOrders(Array.isArray(data) ? data : []);
       } catch (error) {
         toast.error("Gagal mengambil riwayat pesanan");
       } finally {
@@ -74,7 +74,7 @@ export default function ClientOrdersPage() {
                   Belum ada pesanan.
                 </TableCell>
               </TableRow>
-            ) : (
+            ) : Array.isArray(orders) && (
               orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>{format(new Date(order.createdAt), "dd MMM yyyy")}</TableCell>

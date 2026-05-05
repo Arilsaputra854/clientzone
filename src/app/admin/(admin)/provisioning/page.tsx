@@ -17,9 +17,14 @@ export default function AdminProvisioningPage() {
       try {
         const res = await fetch("/api/orders?status=ON_PROCESS");
         const data = await res.json();
-        setOrders(data);
+        if (Array.isArray(data)) {
+          setOrders(data);
+        } else {
+          setOrders([]);
+        }
       } catch (error) {
         console.error(error);
+        setOrders([]);
       } finally {
         setLoading(false);
       }
@@ -59,7 +64,7 @@ export default function AdminProvisioningPage() {
                   Tidak ada antrean provisioning saat ini.
                 </TableCell>
               </TableRow>
-            ) : (
+            ) : Array.isArray(orders) && (
               orders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>
