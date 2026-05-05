@@ -1,8 +1,10 @@
 import * as admin from "firebase-admin";
 
 const getPrivateKey = () => {
-  let key = process.env.FIREBASE_PRIVATE_KEY;
-  if (!key) return undefined;
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (!rawKey) return undefined;
+
+  let key = rawKey;
 
   // 1. Cek jika key dalam format Base64
   if (!key.includes("BEGIN PRIVATE KEY") && !key.startsWith("{")) {
