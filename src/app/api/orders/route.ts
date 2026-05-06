@@ -165,10 +165,10 @@ export async function POST(req: Request) {
         subject: `[REMINDER] Invoice ${domainName}`,
         html: getInvoiceEmailTemplate(orderData, {
           id: invoiceRef.id,
-          externalId: xenditInvoice.id.substring(0, 8).toUpperCase(),
+          externalId: (xenditInvoice.id || "").substring(0, 8).toUpperCase(),
           status: "PENDING",
           totalAmount: finalPrice,
-          expiresAt: xenditInvoice.expiryDate,
+          expiresAt: xenditInvoice.expiryDate || new Date().toISOString(),
           xenditInvoiceUrl: xenditInvoice.invoiceUrl
         }, settings)
       });
@@ -187,10 +187,10 @@ export async function POST(req: Request) {
         subject: `[REMINDER] Invoice ${productName}`,
         html: getInvoiceEmailTemplate(orderData, {
           id: invoiceRef.id,
-          externalId: xenditInvoice.id.substring(0, 8).toUpperCase(),
+          externalId: (xenditInvoice.id || "").substring(0, 8).toUpperCase(),
           status: "PENDING",
           totalAmount: finalPrice,
-          expiresAt: xenditInvoice.expiryDate,
+          expiresAt: xenditInvoice.expiryDate || new Date().toISOString(),
           xenditInvoiceUrl: xenditInvoice.invoiceUrl
         }, settings)
       });

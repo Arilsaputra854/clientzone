@@ -217,7 +217,7 @@ export default function AdminProvisioningDetailPage() {
                     placeholder="https://app-name.clientzone.id" 
                     className="pl-12 h-14 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-[#1a73e8] text-lg transition-all"
                     value={setup.deployedUrl}
-                    onChange={e => setSetup({ deployedUrl: e.target.value })}
+                    onChange={e => setSetup({ ...setup, deployedUrl: e.target.value })}
                     required
                   />
                 </div>
