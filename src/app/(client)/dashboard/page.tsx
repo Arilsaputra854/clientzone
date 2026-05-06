@@ -37,21 +37,33 @@ export default function ClientDashboard() {
         
         const active = Array.isArray(orders) ? orders.filter((o: any) => o.status === "ACTIVE") : [];
         
+        // Count unique orders that have at least one active pending invoice
+        const unpaidOrderIds = new Set(
+          Array.isArray(invoices) 
+            ? invoices
+                .filter((inv: any) => isAfter(new Date(inv.expiresAt), new Date()))
+                .map((inv: any) => inv.orderId)
+            : []
+        );
+        const unpaidCount = unpaidOrderIds.size;
+        
         // Calculate real uptime percentage
-        // (This is a simplified version, ideally you'd average from uptime_logs)
         const upCount = active.filter((o: any) => o.isUp !== false).length;
         const uptimePercent = active.length > 0 ? (upCount / active.length) * 100 : 100;
         
-        // Find nearest due date
+        // Find nearest due date from active services
         let nextDue = null;
         if (active.length > 0) {
-          const sorted = [...active].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-          nextDue = new Date(sorted[0].dueDate);
+          const activeWithDue = active.filter(o => o.dueDate);
+          if (activeWithDue.length > 0) {
+            const sorted = [...activeWithDue].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+            nextDue = new Date(sorted[0].dueDate);
+          }
         }
         
         setStats({
           services: active.length,
-          unpaid: Array.isArray(invoices) ? invoices.length : 0,
+          unpaid: unpaidCount,
           activeOrders: active.slice(0, 3),
           nextDue,
           uptime: active.length > 0 ? `${uptimePercent.toFixed(2)}%` : "100%",

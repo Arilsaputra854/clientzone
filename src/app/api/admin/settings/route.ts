@@ -16,6 +16,9 @@ export async function GET() {
       smtpFromName: process.env.SMTP_FROM_NAME || "ClientZone",
       telegramToken: process.env.TELEGRAM_BOT_TOKEN || "",
       telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
+      companyName: "ClientZone",
+      companyAddress: "",
+      companyLogo: "",
     };
 
     if (!doc.exists) {
@@ -23,11 +26,17 @@ export async function GET() {
     }
 
     const data = doc.data()!;
+    
+    // Fetch lastSync from domain_prices
+    const domainPricesDoc = await adminDb.collection("settings").doc("domain_prices").get();
+    const lastSync = domainPricesDoc.exists ? domainPricesDoc.data()?.lastSync : null;
+
     return NextResponse.json({
       ...defaultSettings,
       ...data,
       // Keep password masked if it exists in Firestore
-      smtpPass: data.smtpPass ? "********" : defaultSettings.smtpPass
+      smtpPass: data.smtpPass ? "********" : defaultSettings.smtpPass,
+      lastSync: lastSync?.toDate ? lastSync.toDate() : lastSync
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -37,7 +46,11 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { smtpHost, smtpPort, smtpUser, smtpPass, smtpFromName, telegramToken, telegramChatId } = body;
+    const { 
+      smtpHost, smtpPort, smtpUser, smtpPass, smtpFromName, 
+      telegramToken, telegramChatId,
+      companyName, companyAddress, companyLogo
+    } = body;
 
     const updateData: any = {
       smtpHost,
@@ -46,6 +59,9 @@ export async function PUT(req: Request) {
       smtpFromName,
       telegramToken,
       telegramChatId,
+      companyName,
+      companyAddress,
+      companyLogo,
       updatedAt: new Date(),
     };
 

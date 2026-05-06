@@ -41,8 +41,8 @@ export function ClientSidebar() {
   ];
 
   const productCategories = [
+    { name: "Beli Domain", href: "/domains", icon: Globe },
     { name: "Hosting", href: "/services?cat=HOSTING", icon: Globe },
-    { name: "VPS", href: "/services?cat=VPS", icon: Cpu },
   ];
 
   const SidebarItem = ({ item, active }: { item: any, active: boolean }) => (

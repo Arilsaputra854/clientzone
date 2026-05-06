@@ -5,7 +5,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const { id } = await params;
     const body = await req.json();
-    const { deployedUrl, status } = body;
+    const { deployedUrl, status, cloudflareZoneId } = body;
 
     const orderRef = adminDb.collection("orders").doc(id);
     const orderDoc = await orderRef.get();
@@ -18,6 +18,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     await orderRef.update({
       status: status || "ACTIVE",
       activatedAt: new Date(),
+      cloudflareZoneId: cloudflareZoneId || null,
       serverCredentials: {
         deployedUrl,
       },

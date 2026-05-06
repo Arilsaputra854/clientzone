@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/../firebase/admin";
+import { sendEmail } from "@/lib/mail";
+import { getInvoiceEmailTemplate } from "@/lib/email-templates";
 
 export async function POST(req: Request) {
   try {
@@ -57,17 +59,35 @@ export async function POST(req: Request) {
         // Notify Admin via Telegram
         try {
           const { sendTelegramNotification } = await import("@/lib/telegram");
+          const isDomain = orderData.type === "DOMAIN";
           await sendTelegramNotification(
             `<b>💰 Pembayaran Diterima!</b>\n\n` +
+            `<b>Order:</b> ${isDomain ? "Pendaftaran Domain" : "Layanan Hosting"}\n` +
             `<b>Produk:</b> ${orderData.productName}\n` +
             `<b>Klien:</b> ${orderData.userName || orderData.userEmail}\n` +
             `<b>Domain:</b> ${orderData.domainName}\n` +
             `<b>Total:</b> Rp ${orderData.price?.toLocaleString("id-ID")}\n\n` +
-            `<b>⚠️ PROVISIONING REQUIRED</b>\n` +
-            `<i>Layanan siap di-setup di panel admin.</i>`
+            (isDomain 
+              ? `<b>⚠️ DOMAIN REGISTRATION REQUIRED</b>\n<i>Segera daftarkan domain di registrar pilihan Anda.</i>`
+              : `<b>⚠️ PROVISIONING REQUIRED</b>\n<i>Layanan siap di-setup di panel admin.</i>`)
           );
+
+          // Notify User via Email
+          const settingsDoc = await adminDb.collection("settings").doc("system_config").get();
+          const settings = settingsDoc.exists ? settingsDoc.data() : { companyName: "ClientZone", companyAddress: "", companyLogo: "" };
+
+          await sendEmail({
+            to: orderData.userEmail,
+            subject: `[CONFIRMATION] Pembayaran Invoice #${external_id.substring(0, 8).toUpperCase()}`,
+            html: getInvoiceEmailTemplate(orderData, {
+              id: external_id,
+              status: "PAID",
+              totalAmount: orderData.price,
+              expiresAt: orderData.dueDate,
+            }, settings)
+          });
         } catch (e) {
-          console.error("Telegram notify failed", e);
+          console.error("Notification failed", e);
         }
       }
     }

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/../firebase/admin";
 import { createXenditInvoice } from "@/lib/xendit";
+import { sendTelegramNotification } from "@/lib/telegram";
+import { sendEmail } from "@/lib/mail";
+import { getInvoiceEmailTemplate } from "@/lib/email-templates";
 
 export async function GET(req: Request) {
   try {
@@ -73,29 +76,45 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { productId, userId, userName, userEmail, domainName, repoUrl } = body;
+    const { type, productId, userId, userName, userEmail, domainName, repoUrl, customPrice, whoisData } = body;
 
-    // 1. Get Product Data
-    const productDoc = await adminDb.collection("products").doc(productId).get();
-    if (!productDoc.exists) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    let product: any = {};
+    let finalPrice = 0;
+    let productName = "";
+    let billingCycle = "ANNUAL";
+
+    if (type === "DOMAIN") {
+      finalPrice = customPrice;
+      productName = `Domain: ${domainName}`;
+      product = { name: productName, price: finalPrice, billingCycle: "ANNUAL" };
+    } else {
+      // 1. Get Product Data
+      const productDoc = await adminDb.collection("products").doc(productId).get();
+      if (!productDoc.exists) {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
+      product = productDoc.data()!;
+      finalPrice = product.price;
+      productName = product.name;
+      billingCycle = product.billingCycle;
     }
-    const product = productDoc.data()!;
 
     // 2. Create Order in Firestore
     const orderRef = adminDb.collection("orders").doc();
     const orderData = {
       id: orderRef.id,
+      type: type || "HOSTING",
       userId,
       userName,
       userEmail,
-      productId,
-      productName: product.name,
+      productId: productId || "custom_domain",
+      productName,
       domainName,
-      repoUrl,
-      price: product.price,
-      billingCycle: product.billingCycle,
+      repoUrl: repoUrl || null,
+      price: finalPrice,
+      billingCycle,
       status: "UNPAID",
+      whoisData: whoisData || null,
       createdAt: new Date(),
     };
     await orderRef.set(orderData);
@@ -103,9 +122,9 @@ export async function POST(req: Request) {
     // 3. Create Xendit Invoice
     const xenditInvoice = await createXenditInvoice(
       orderRef.id,
-      product.price,
+      finalPrice,
       { email: userEmail, name: userName },
-      `Pembayaran ${product.name} - ${domainName}`
+      `Pembayaran ${productName}`
     );
 
     // 4. Create Invoice Record in Firestore
@@ -123,6 +142,59 @@ export async function POST(req: Request) {
       createdAt: new Date(),
       expiresAt: new Date(xenditInvoice.expiryDate),
     });
+
+    // 4.5 Fetch Settings for Email Template
+    const settingsDoc = await adminDb.collection("settings").doc("system_config").get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : { companyName: "ClientZone", companyAddress: "", companyLogo: "" };
+
+    // 5. Send Notifications
+    if (type === "DOMAIN") {
+      // Telegram to Admin
+      await sendTelegramNotification(
+        `🔔 <b>Pesanan Domain Baru</b>\n\n` +
+        `📦 <b>Domain:</b> ${domainName}\n` +
+        `👤 <b>Customer:</b> ${userName}\n` +
+        `📧 <b>Email:</b> ${userEmail}\n` +
+        `💰 <b>Total:</b> Rp ${finalPrice.toLocaleString("id-ID")}\n\n` +
+        `Harap cek dashboard admin untuk data WHOIS.`
+      );
+
+      // Email to User
+      await sendEmail({
+        to: userEmail,
+        subject: `[REMINDER] Invoice ${domainName}`,
+        html: getInvoiceEmailTemplate(orderData, {
+          id: invoiceRef.id,
+          externalId: xenditInvoice.id.substring(0, 8).toUpperCase(),
+          status: "PENDING",
+          totalAmount: finalPrice,
+          expiresAt: xenditInvoice.expiryDate,
+          xenditInvoiceUrl: xenditInvoice.invoiceUrl
+        }, settings)
+      });
+    } else {
+       // Standard notification for hosting orders
+       await sendTelegramNotification(
+        `🚀 <b>Order Layanan Baru</b>\n\n` +
+        `📦 <b>Produk:</b> ${productName}\n` +
+        `👤 <b>Customer:</b> ${userName}\n` +
+        `💰 <b>Total:</b> Rp ${finalPrice.toLocaleString("id-ID")}`
+      );
+
+      // Email to User for Hosting
+      await sendEmail({
+        to: userEmail,
+        subject: `[REMINDER] Invoice ${productName}`,
+        html: getInvoiceEmailTemplate(orderData, {
+          id: invoiceRef.id,
+          externalId: xenditInvoice.id.substring(0, 8).toUpperCase(),
+          status: "PENDING",
+          totalAmount: finalPrice,
+          expiresAt: xenditInvoice.expiryDate,
+          xenditInvoiceUrl: xenditInvoice.invoiceUrl
+        }, settings)
+      });
+    }
 
     return NextResponse.json({ 
       orderId: orderRef.id, 

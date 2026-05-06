@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Server, Save, ArrowLeft, ExternalLink, GitBranch, Globe } from "lucide-react";
+import { Server, Save, ArrowLeft, ExternalLink, GitBranch, Globe, User, Phone, MapPin, Mail } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminProvisioningDetailPage() {
@@ -19,6 +19,7 @@ export default function AdminProvisioningDetailPage() {
 
   const [setup, setSetup] = useState({
     deployedUrl: "",
+    cloudflareZoneId: "",
   });
 
   useEffect(() => {
@@ -28,8 +29,11 @@ export default function AdminProvisioningDetailPage() {
         const data = await res.json();
         const found = Array.isArray(data) ? data.find((o: any) => o.id === id) : data;
         setOrder(found);
-        if (found?.serverCredentials?.deployedUrl) {
-          setSetup({ deployedUrl: found.serverCredentials.deployedUrl });
+        if (found?.serverCredentials?.deployedUrl || found?.cloudflareZoneId) {
+          setSetup({ 
+            deployedUrl: found?.serverCredentials?.deployedUrl || "",
+            cloudflareZoneId: found?.cloudflareZoneId || ""
+          });
         }
       } catch (error) {
         toast.error("Gagal mengambil data pesanan");
@@ -50,6 +54,7 @@ export default function AdminProvisioningDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           deployedUrl: setup.deployedUrl,
+          cloudflareZoneId: setup.cloudflareZoneId,
           status: "ACTIVE",
         }),
       });
@@ -83,7 +88,11 @@ export default function AdminProvisioningDetailPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">Setup & Aktivasi</h1>
-          <p className="text-gray-500">Konfigurasi alamat publik untuk layanan {order.productName}.</p>
+          <p className="text-gray-500">
+            {order.type === "DOMAIN" 
+              ? `Konfigurasi pendaftaran untuk domain: ${order.domainName}.`
+              : `Konfigurasi alamat publik untuk layanan ${order.productName}.`}
+          </p>
         </div>
       </div>
 
@@ -110,36 +119,88 @@ export default function AdminProvisioningDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1e1e1e] border-none shadow-2xl overflow-hidden border-l-4 border-[#1a73e8]">
-            <CardHeader>
-                <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
-                  <GitBranch className="w-5 h-5" />
-                  Source Code
-                </CardTitle>
-                <CardDescription className="text-gray-500">Repository publik dari klien.</CardDescription>
-              </CardHeader>
-            <CardContent>
-              {order.repoUrl ? (
-                <Button variant="outline" className="w-full justify-between bg-white/2 border-white/10 hover:bg-white/5 text-white h-12" asChild>
-                  <a href={order.repoUrl} target="_blank" rel="noopener noreferrer">
-                    <span className="truncate max-w-[180px]">{order.repoUrl}</span>
-                    <ExternalLink className="w-4 h-4 ml-2 flex-shrink-0" />
-                  </a>
-                </Button>
-              ) : (
-                <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs text-center font-medium">
-                  URL Repository tidak tersedia (Order Lama)
+          {order.type === "DOMAIN" ? (
+            <Card className="bg-[#1e1e1e] border-none shadow-2xl overflow-hidden border-l-4 border-amber-500">
+              <CardHeader>
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    WHOIS Data
+                  </CardTitle>
+                  <CardDescription className="text-gray-500">Informasi pemilik domain dari klien.</CardDescription>
+                </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 rounded bg-white/5 text-gray-500"><User className="w-4 h-4" /></div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold text-gray-600 uppercase">Nama Lengkap</p>
+                      <p className="text-white text-sm">{order.whoisData?.fullName || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 rounded bg-white/5 text-gray-500"><Mail className="w-4 h-4" /></div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold text-gray-600 uppercase">Email</p>
+                      <p className="text-white text-sm">{order.whoisData?.email || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 rounded bg-white/5 text-gray-500"><Phone className="w-4 h-4" /></div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold text-gray-600 uppercase">No. Telepon</p>
+                      <p className="text-white text-sm">{order.whoisData?.phone || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 rounded bg-white/5 text-gray-500"><MapPin className="w-4 h-4" /></div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold text-gray-600 uppercase">Alamat Lengkap</p>
+                      <p className="text-white text-xs leading-relaxed">
+                        {order.whoisData?.address}, {order.whoisData?.city}, {order.whoisData?.zipCode}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-[#1e1e1e] border-none shadow-2xl overflow-hidden border-l-4 border-[#1a73e8]">
+              <CardHeader>
+                  <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                    <GitBranch className="w-5 h-5" />
+                    Source Code
+                  </CardTitle>
+                  <CardDescription className="text-gray-500">Repository publik dari klien.</CardDescription>
+                </CardHeader>
+              <CardContent>
+                {order.repoUrl ? (
+                  <Button variant="outline" className="w-full justify-between bg-white/2 border-white/10 hover:bg-white/5 text-white h-12" asChild>
+                    <a href={order.repoUrl} target="_blank" rel="noopener noreferrer">
+                      <span className="truncate max-w-[180px]">{order.repoUrl}</span>
+                      <ExternalLink className="w-4 h-4 ml-2 flex-shrink-0" />
+                    </a>
+                  </Button>
+                ) : (
+                  <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-lg text-red-400 text-xs text-center font-medium">
+                    URL Repository tidak tersedia (Order Lama)
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Setup Form */}
         <Card className="md:col-span-2 bg-[#1e1e1e] border-none shadow-2xl">
           <CardHeader className="border-b border-white/5 pb-8">
-            <CardTitle className="text-xl font-bold text-white">Deployment URL</CardTitle>
-            <CardDescription className="text-gray-500">Masukkan alamat publik yang sudah aktif setelah Anda melakukan deployment.</CardDescription>
+            <CardTitle className="text-xl font-bold text-white">
+              {order.type === "DOMAIN" ? "Domain Activation" : "Deployment URL"}
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              {order.type === "DOMAIN" 
+                ? "Masukkan URL akses domain (biasanya sama dengan nama domain) setelah Anda mendaftarkannya di registrar."
+                : "Masukkan alamat publik yang sudah aktif setelah Anda melakukan deployment."}
+            </CardDescription>
           </CardHeader>
           <form onSubmit={handleActivate}>
             <CardContent className="pt-8 space-y-6">
@@ -164,6 +225,24 @@ export default function AdminProvisioningDetailPage() {
                   Link ini akan langsung ditampilkan di dashboard klien sebagai tombol akses utama.
                 </p>
               </div>
+
+              {order.type === "DOMAIN" && (
+                <div className="space-y-3 pt-4 border-t border-white/5">
+                  <Label htmlFor="cloudflareZoneId" className="text-sm font-bold text-amber-500 uppercase tracking-widest">
+                    Cloudflare Zone ID
+                  </Label>
+                  <Input 
+                    id="cloudflareZoneId" 
+                    placeholder="Contoh: 023e105f4ecef8ad9ca31a8372d0c353" 
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-amber-500 h-12 transition-all"
+                    value={setup.cloudflareZoneId}
+                    onChange={e => setSetup({ ...setup, cloudflareZoneId: e.target.value })}
+                  />
+                  <p className="text-[10px] text-gray-500 italic">
+                    * Masukkan Zone ID dari Cloudflare untuk mengaktifkan fitur DNS Management di sisi klien.
+                  </p>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="bg-white/2 border-t border-white/5 py-8 flex justify-between items-center gap-4">
               <div>

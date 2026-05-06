@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminInvoicesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -43,6 +44,7 @@ export default function AdminInvoicesPage() {
               <TableHead>Nominal</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Tgl Bayar</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -74,6 +76,13 @@ export default function AdminInvoicesPage() {
                   </TableCell>
                   <TableCell>
                     {inv.paidAt ? format(new Date(inv.paidAt?.seconds * 1000 || inv.paidAt), "dd/MM/yyyy HH:mm") : "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" asChild title="Cetak Invoice">
+                      <a href={`/invoice/${inv.id}`} target="_blank" rel="noopener noreferrer">
+                        <Receipt className="w-4 h-4" />
+                      </a>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

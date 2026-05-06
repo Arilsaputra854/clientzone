@@ -14,7 +14,8 @@ import {
   Save, 
   ShieldCheck, 
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Server
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,12 +28,17 @@ export default function AdminSettingsPage() {
     smtpFromName: "ClientZone",
     telegramToken: "",
     telegramChatId: "",
+    companyName: "ClientZone",
+    companyAddress: "",
+    companyLogo: "",
   });
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
   const [testingTelegram, setTestingTelegram] = useState(false);
+  const [syncingPrices, setSyncingPrices] = useState(false);
+  const [lastSync, setLastSync] = useState<any>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -43,6 +49,7 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/admin/settings");
       const data = await res.json();
       setSettings(data);
+      if (data.lastSync) setLastSync(data.lastSync);
     } catch (error) {
       toast.error("Gagal memuat pengaturan");
     } finally {
@@ -101,6 +108,21 @@ export default function AdminSettingsPage() {
       toast.error(error.message);
     } finally {
       setTestingTelegram(false);
+    }
+  };
+
+  const syncPrices = async () => {
+    setSyncingPrices(true);
+    try {
+      const res = await fetch("/api/admin/domains/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(`Berhasil menyinkronkan ${data.count} harga domain!`);
+      setLastSync(data.lastSync);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setSyncingPrices(false);
     }
   };
 
@@ -238,7 +260,79 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Security Note */}
+          {/* Domain Price Sync */}
+          <Card className="bg-[#1e1e1e] border-none shadow-2xl overflow-hidden border-l-4 border-amber-500">
+            <CardHeader className="border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded bg-amber-500/10 text-amber-500">
+                  <RefreshCw className={cn("w-5 h-5", syncingPrices && "animate-spin")} />
+                </div>
+                <CardTitle className="text-xl font-bold text-white">Domain Price Sync</CardTitle>
+              </div>
+              <CardDescription className="text-gray-500">Sinkronkan harga dasar domain dari registrar.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-8 space-y-4">
+              <div className="flex justify-between items-center p-4 bg-white/2 rounded-lg border border-white/5">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-gray-500 uppercase">Status Sinkronisasi</p>
+                  <p className="text-white font-medium text-sm">
+                    {lastSync ? `Terakhir sinkron: ${new Date(lastSync).toLocaleString("id-ID")}` : "Belum pernah sinkron"}
+                  </p>
+                </div>
+                <Button 
+                  onClick={syncPrices} 
+                  disabled={syncingPrices}
+                  className="bg-amber-500 hover:bg-amber-600 text-black font-bold h-10 px-6"
+                >
+                  {syncingPrices ? "Syncing..." : "Sync Now"}
+                </Button>
+              </div>
+              <p className="text-[10px] text-gray-500 italic">
+                * Harga akan diambil dari DomaiNesia sebagai referensi pasar. Hasil sinkronisasi akan otomatis ditambahkan markup 15% di dashboard client.
+              </p>
+            </CardContent>
+          </Card>
+          {/* Company Profile */}
+          <Card className="bg-[#1e1e1e] border-none shadow-2xl overflow-hidden border-l-4 border-purple-500">
+            <CardHeader className="border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded bg-purple-500/10 text-purple-500">
+                  <Server className="w-5 h-5" />
+                </div>
+                <CardTitle className="text-xl font-bold text-white">Company Profile</CardTitle>
+              </div>
+              <CardDescription className="text-gray-500">Informasi perusahaan untuk invoice.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-8 space-y-5">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase">Nama Perusahaan</Label>
+                <Input 
+                  placeholder="PT. Maju Bersama" 
+                  className="bg-white/5 border-white/10 text-white h-11"
+                  value={settings.companyName}
+                  onChange={e => setSettings({...settings, companyName: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase">Logo URL (PNG)</Label>
+                <Input 
+                  placeholder="https://..." 
+                  className="bg-white/5 border-white/10 text-white h-11"
+                  value={settings.companyLogo}
+                  onChange={e => setSettings({...settings, companyLogo: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-gray-500 uppercase">Alamat Perusahaan</Label>
+                <textarea 
+                  className="w-full bg-white/5 border border-white/10 text-white rounded-md p-3 h-24 focus:border-[#1a73e8] outline-none text-sm"
+                  placeholder="Jl. Raya Merdeka No. 123..."
+                  value={settings.companyAddress}
+                  onChange={e => setSettings({...settings, companyAddress: e.target.value})}
+                />
+              </div>
+            </CardContent>
+          </Card>
           <div className="bg-[#1a73e8]/5 border border-[#1a73e8]/20 rounded-xl p-6 space-y-3">
             <div className="flex items-center gap-2 text-[#1a73e8] font-bold text-sm">
               <ShieldCheck className="w-4 h-4" />
